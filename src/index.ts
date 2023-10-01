@@ -8,11 +8,11 @@ import { ServerWebSocket } from "bun";
 const PORT = parseInt(process.env.PORT || "3001", 10);
 const HOST = process.env.HOST || "0.0.0.0";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
-const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_REST_URL = process.env.REDIS_REST_URL;
 const API_KEY = process.env.API_KEY;
 
-if (!UPSTASH_REDIS_REST_URL) {
-  console.error("UPSTASH_REDIS_REST_URL is required");
+if (!REDIS_REST_URL) {
+  console.error("REDIS_REST_URL is required");
   process.exit(1);
 }
 if (!API_KEY) {
@@ -21,8 +21,8 @@ if (!API_KEY) {
 }
 
 // initialize redis publisher and subscriber
-const pub = new Redis(UPSTASH_REDIS_REST_URL);
-const sub = new Redis(UPSTASH_REDIS_REST_URL);
+const pub = new Redis(REDIS_REST_URL);
+const sub = new Redis(REDIS_REST_URL);
 
 // Track number of users per instance to know when to unsubscribe redis from channels
 const userCountPerChannel = new Map<string, number>();
