@@ -1,15 +1,7 @@
-# Elysia with Bun runtime
+A bun chat server with multi-channel support
 
-## Getting Started
-To get started with this template, simply paste this command into your terminal:
-```bash
-bun create elysia ./elysia-example
-```
+- Designed to be scaled horizontally
+- Redis middle layer to connect server instances
+- Caddy load balancer for client connections
 
-## Development
-To start the development server run:
-```bash
-bun run dev
-```
-
-Open http://localhost:3000/ with your browser to see the result.
+![Alt text](<Screen Recording 2023-10-01 at 12.40.35 PM.gif>)
