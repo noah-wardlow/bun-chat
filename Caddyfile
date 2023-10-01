@@ -1,0 +1,9 @@
+{
+	debug
+}
+
+http://127.0.0.1 {
+	reverse_proxy bun-chat-1:3001 bun-chat-2:4000 bun-chat-3:5001 {
+		header_down Strict-Transport-Security max-age=31536000
+	}
+}
