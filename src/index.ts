@@ -35,8 +35,7 @@ const server = Bun.serve<WebsocketData>({
   port: PORT,
   hostname: HOST,
   fetch: async (req, server) => {
-    await handleFetch(req, server);
-    return undefined;
+    return await handleFetch(req, server);
   },
   websocket: {
     open: async (ws) => {
@@ -149,7 +148,7 @@ async function handleClose(ws: ServerWebSocket<WebsocketData>) {
       sub.unsubscribe(channel);
     }
   });
-  // Remove user from online users set
+  // Remove user from online users set and publish to online users channel
   const onlineUsersKey = `${orgId}:onlineUsers`;
   const pipeline = pub.pipeline();
   pipeline.srem(onlineUsersKey, userId);
