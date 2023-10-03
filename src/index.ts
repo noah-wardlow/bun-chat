@@ -84,9 +84,6 @@ async function handleOpen(ws: ServerWebSocket<WebsocketData>) {
 
   userCountPerOrg.set(orgId, (userCountPerOrg.get(orgId) || 0) + 1);
 
-  // Publish directly redis channel -> server channel
-  // won't be handled by handleIncomingMsg because
-
   await pub.sadd(onlineUsersKey, userId);
   pub.publish(
     onlineUsersKey,
