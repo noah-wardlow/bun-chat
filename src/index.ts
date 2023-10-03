@@ -39,13 +39,13 @@ const server = Bun.serve<WebsocketData>({
   },
   websocket: {
     open: async (ws) => {
-      handleOpen(ws);
+      await handleOpen(ws);
     },
     message: async (ws, message) => {
       await handleIncomingMsg(message.toString(), ws);
     },
     close: async (ws) => {
-      handleClose(ws);
+      await handleClose(ws);
     },
   },
 });
