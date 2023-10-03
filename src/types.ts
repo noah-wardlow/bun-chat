@@ -16,8 +16,6 @@ interface NewChatMessageData {
     channelId: string;
     userId: string;
     message: string;
-    createdAt: string;
-    media: any[]; // Replace with actual type if available
   };
 }
 
