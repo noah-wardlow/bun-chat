@@ -1,9 +1,9 @@
 import Redis from "ioredis";
 import jwt from "jsonwebtoken";
 import { IncomingMessagetEvents, WebsocketData } from "./types";
-import { isValidDecodedToken } from "./utils";
+import { isNewChatMessageData, isValidDecodedToken } from "./utils";
 import { Server, ServerWebSocket } from "bun";
-import { prisma } from "@newbrains/prizma";
+import { prisma } from "@newbrains/prisma";
 
 // Load environment variables
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -11,6 +11,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 const REDIS_REST_URL = process.env.REDIS_REST_URL;
 const API_KEY = process.env.API_KEY;
+const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!REDIS_REST_URL) {
   console.error("REDIS_REST_URL is required");
@@ -18,6 +19,11 @@ if (!REDIS_REST_URL) {
 }
 if (!API_KEY) {
   console.error("API_KEY is required");
+  process.exit(1);
+}
+
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL is required");
   process.exit(1);
 }
 
@@ -98,32 +104,34 @@ async function handleIncomingMsg(
   const parsed = JSON.parse(message);
   switch (parsed.event) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
-      try {
-        const { data, event } = parsed;
-        const { channelId, orgId, userId, message } = data;
+      if (isNewChatMessageData(parsed)) {
+        try {
+          const { data, event } = parsed;
 
-        // save message to db
-        const { createdAt, id } = prisma.message.create({
-          data: {
+          const { channelId, userId, content } = data;
+
+          // save message to db
+          const { id, createdAt } = await prisma.message.create({
+            data: {
+              channelId,
+              userId,
+              content,
+            },
+          });
+
+          pub.publish(
             channelId,
-            userId,
-            orgId,
-            message,
-          },
-        });
-
-        pub.publish(
-          channelId,
-          JSON.stringify({
-            ...data,
-            id,
-            event,
-            createdAt,
-          })
-        );
-      } catch (err) {
-        console.error(err);
-        ws.send(JSON.stringify({ event: "MESSAGE_SEND_FAIL" }));
+            JSON.stringify({
+              ...data,
+              id,
+              event,
+              createdAt,
+            })
+          );
+        } catch (err) {
+          console.error(err);
+          ws.send(JSON.stringify({ event: "MESSAGE_SEND_FAIL" }));
+        }
       }
       break;
     default:

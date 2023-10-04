@@ -1,4 +1,8 @@
-import { DecodedToken } from "./types";
+import {
+  DecodedToken,
+  NewChatMessageData,
+  IncomingMessagetEvents,
+} from "./types";
 
 export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
   return (
@@ -10,6 +14,9 @@ export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
     "orgId" in obj &&
     typeof obj.orgId === "string"
   );
+}
+function isNewChatMessageData(obj: any): obj is NewChatMessageData {
+  return obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE;
 }
 
 // async function editListItem(redis, listKey, index, newItem) {

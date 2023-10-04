@@ -10,12 +10,12 @@ export enum IncomingMessagetEvents {
   // Add other event types here
 }
 
-interface NewChatMessageData {
+export interface NewChatMessageData {
   event: IncomingMessagetEvents.NEW_CHAT_MESSAGE;
   data: {
     channelId: string;
     userId: string;
-    message: string;
+    content: string;
   };
 }
 
