@@ -1,5 +1,5 @@
 # Stage 1 - Build the base
-FROM oven/bun AS base
+FROM oven/bun:latest AS base
 WORKDIR /app
 COPY package*.json ./
 COPY bun.lockb ./
@@ -14,7 +14,7 @@ COPY src ./src
 RUN bun run build
 
 # Stage 3 - Build the final image
-FROM oven/bun
+FROM oven/bun:latest
 WORKDIR /app
 COPY package*.json ./
 COPY bun.lockb ./
