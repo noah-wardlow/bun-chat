@@ -15,7 +15,7 @@ export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
     typeof obj.orgId === "string"
   );
 }
-function isNewChatMessageData(obj: any): obj is NewChatMessageData {
+export function isNewChatMessageData(obj: any): obj is NewChatMessageData {
   return obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE;
 }
 
