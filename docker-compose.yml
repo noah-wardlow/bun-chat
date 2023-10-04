@@ -12,6 +12,7 @@ services:
       - PORT=3001
       - CORS_ORIGIN=${CORS_ORIGIN}
       - API_KEY=${API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_REST_URL=${REDIS_REST_URL}
   bun-chat-2:
     build:
@@ -23,6 +24,7 @@ services:
       - PORT=4000
       - CORS_ORIGIN=${CORS_ORIGIN}
       - API_KEY=${API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_REST_URL=${REDIS_REST_URL}
   bun-chat-3:
     build:
@@ -34,8 +36,9 @@ services:
       - PORT=5001
       - CORS_ORIGIN=${CORS_ORIGIN}
       - API_KEY=${API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
       - REDIS_REST_URL=${REDIS_REST_URL}
-# Start load balancer
+  # Start load balancer
   caddy:
     image: caddy/caddy:2.7.3-alpine
     container_name: caddy-server
@@ -52,4 +55,5 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+
 
