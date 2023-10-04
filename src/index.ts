@@ -4,6 +4,7 @@ import { IncomingMessagetEvents, WebsocketData } from "./types";
 import { isNewChatMessageData, isValidDecodedToken } from "./utils";
 import { Server, ServerWebSocket } from "bun";
 import { prisma } from "@newbrains/prisma";
+import handleNewChatMessage from "./handlers/handleNewChatMessage";
 
 // Load environment variables
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -104,38 +105,9 @@ async function handleIncomingMsg(
   const parsed = JSON.parse(message);
   switch (parsed.event) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
-      if (isNewChatMessageData(parsed)) {
-        try {
-          const { data, event } = parsed;
-
-          const { channelId, userId, content } = data;
-
-          // save message to db
-          const { id, createdAt } = await prisma.message.create({
-            data: {
-              channelId,
-              userId,
-              content,
-            },
-          });
-
-          pub.publish(
-            channelId,
-            JSON.stringify({
-              ...data,
-              id,
-              event,
-              createdAt,
-            })
-          );
-        } catch (err) {
-          console.error(err);
-          ws.send(JSON.stringify({ event: "MESSAGE_SEND_FAIL" }));
-        }
-      }
+      await handleNewChatMessage(parsed, ws, prisma, pub);
       break;
     default:
-      // Send message back to to client
       ws.send(JSON.stringify({ event: "INVALID_MESSAGE" }));
       break;
   }
