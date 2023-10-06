@@ -10,6 +10,13 @@ export enum IncomingMessagetEvents {
   // Add other event types here
 }
 
+export enum OutgoingMessageEvents {
+  MESSAGE_SEND_FAIL = "MESSAGE_SEND_FAIL",
+  INVALID_MESSAGE = "INVALID_MESSAGE",
+  USER_ONLINE = "USER_ONLINE",
+  USER_OFFLINE = "USER_OFFLINE",
+}
+
 export interface NewChatMessageData {
   event: IncomingMessagetEvents.NEW_CHAT_MESSAGE;
   data: {

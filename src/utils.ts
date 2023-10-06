@@ -15,8 +15,12 @@ export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
     typeof obj.orgId === "string"
   );
 }
-export function isNewChatMessageData(obj: any): obj is NewChatMessageData {
-  return obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE;
+export function isNewChatMessageData(obj: unknown): obj is NewChatMessageData {
+  return (
+    obj instanceof Object &&
+    "event" in obj &&
+    obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE
+  );
 }
 
 // async function editListItem(redis, listKey, index, newItem) {

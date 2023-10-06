@@ -1,7 +1,7 @@
 import { PrismaClient } from "@newbrains/prisma/client";
 import { isNewChatMessageData } from "../utils";
 import Redis from "ioredis";
-import { WebsocketData } from "../types";
+import { OutgoingMessageEvents, WebsocketData } from "../types";
 import { ServerWebSocket } from "bun";
 
 export default async function handleNewChatMessage(
@@ -28,17 +28,22 @@ export default async function handleNewChatMessage(
       pub.publish(
         channelId,
         JSON.stringify({
-          ...data,
-          id,
           event,
-          createdAt,
+          data: {
+            ...data,
+            id,
+            event,
+            createdAt,
+          },
         })
       );
     } catch (err) {
       console.error(err);
-      ws.send(JSON.stringify({ event: "MESSAGE_SEND_FAIL" }));
+      ws.send(
+        JSON.stringify({ event: OutgoingMessageEvents.MESSAGE_SEND_FAIL })
+      );
     }
   } else {
-    ws.send(JSON.stringify({ event: "INVALID_MESSAGE" }));
+    ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
   }
 }

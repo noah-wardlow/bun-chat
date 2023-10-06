@@ -1,7 +1,11 @@
 import Redis from "ioredis";
 import jwt from "jsonwebtoken";
-import { IncomingMessagetEvents, WebsocketData } from "./types";
-import { isNewChatMessageData, isValidDecodedToken } from "./utils";
+import {
+  IncomingMessagetEvents,
+  OutgoingMessageEvents,
+  WebsocketData,
+} from "./types";
+import { isValidDecodedToken } from "./utils";
 import { Server, ServerWebSocket } from "bun";
 import { prisma } from "@newbrains/prisma";
 import handleNewChatMessage from "./handlers/handleNewChatMessage";
@@ -90,11 +94,18 @@ async function handleOpen(ws: ServerWebSocket<WebsocketData>) {
 
   userCountPerOrg.set(orgId, (userCountPerOrg.get(orgId) || 0) + 1);
 
-  await pub.sadd(onlineUsersKey, userId);
-  pub.publish(
+  const pipeline = pub.pipeline();
+  pipeline.sadd(onlineUsersKey, userId);
+  pipeline.publish(
     onlineUsersKey,
-    JSON.stringify({ event: "USER_ONLINE", userId: userId })
+    JSON.stringify({
+      event: OutgoingMessageEvents.USER_OFFLINE,
+      data: {
+        userId: userId,
+      },
+    })
   );
+  await pipeline.exec();
 }
 
 // Incoming websocket message handler
@@ -108,7 +119,7 @@ async function handleIncomingMsg(
       await handleNewChatMessage(parsed, ws, prisma, pub);
       break;
     default:
-      ws.send(JSON.stringify({ event: "INVALID_MESSAGE" }));
+      ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
       break;
   }
 }
@@ -134,7 +145,10 @@ async function handleClose(ws: ServerWebSocket<WebsocketData>) {
   pipeline.srem(onlineUsersKey, userId);
   pipeline.publish(
     onlineUsersKey,
-    JSON.stringify({ event: "USER_OFFLINE", userId: userId })
+    JSON.stringify({
+      event: OutgoingMessageEvents.USER_OFFLINE,
+      userId: userId,
+    })
   );
   await pipeline.exec();
   const currentCount = userCountPerOrg.get(orgId) || 0;
