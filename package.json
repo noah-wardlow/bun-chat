@@ -7,13 +7,13 @@
     "build": "bun build ./src/index.ts --outdir ./build --target bun"
   },
   "dependencies": {
-    "@newbrains/prisma": "^1.0.1",
+    "@prisma/client": "^5.4.2",
     "ioredis": "^5.3.2",
-    "jsonwebtoken": "8.5.1"
+    "next-auth": "^4.24.3",
+    "prisma": "^5.4.2"
   },
   "devDependencies": {
     "@types/ioredis": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.3",
     "bun-types": "latest"
   },
   "module": "src/index.js"

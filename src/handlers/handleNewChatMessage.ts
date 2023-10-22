@@ -1,8 +1,8 @@
-import { PrismaClient } from "@newbrains/prisma/client";
 import { isNewChatMessageData } from "../utils";
 import Redis from "ioredis";
 import { OutgoingMessageEvents, WebsocketData } from "../types";
 import { ServerWebSocket } from "bun";
+import { PrismaClient } from "@prisma/client";
 
 export default async function handleNewChatMessage(
   parsed: unknown,
