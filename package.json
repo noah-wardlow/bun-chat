@@ -7,10 +7,9 @@
     "build": "bun build ./src/index.ts --outdir ./build --target bun"
   },
   "dependencies": {
-    "@prisma/client": "^5.4.2",
     "ioredis": "^5.3.2",
     "next-auth": "^4.24.3",
-    "prisma": "^5.4.2"
+    "postgres": "^3.4.1"
   },
   "devDependencies": {
     "@types/ioredis": "^5.0.0",

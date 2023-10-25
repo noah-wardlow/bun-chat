@@ -17,7 +17,6 @@ export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
   );
 }
 export function isNewChatMessageData(obj: unknown): obj is NewChatMessageData {
-  console.log(obj);
   return (
     obj instanceof Object &&
     "event" in obj &&

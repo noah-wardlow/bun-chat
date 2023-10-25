@@ -2,35 +2,50 @@ import { isNewChatMessageData } from "../utils";
 import Redis from "ioredis";
 import { OutgoingMessageEvents, WebsocketData } from "../types";
 import { ServerWebSocket } from "bun";
-import { PrismaClient } from "@prisma/client";
+import sql from "../db";
+
+interface ChatMessage {
+  id: string;
+  createdAt: string;
+}
 
 export default async function handleNewChatMessage(
   parsed: unknown,
   ws: ServerWebSocket<WebsocketData>,
-  prisma: PrismaClient,
   pub: Redis
 ) {
   if (isNewChatMessageData(parsed)) {
     try {
       const { data, event } = parsed;
 
-      const { channelId, userId, content } = data;
+      const { userId, content, channelId } = data;
 
       // save message to db
-      const { id, createdAt } = await prisma.message.create({
-        data: {
-          channelId,
-          userId,
-          content,
-        },
-      });
+      const [{ createdAt, id }] = await sql`
+      INSERT INTO "Message" ("channelId", "userId", "content")
+      VALUES (${channelId}, ${userId}, ${content})
+      RETURNING "id", "createdAt"
+    `;
+
+      console.log(
+        JSON.stringify({
+          event,
+          data: {
+            ...data,
+            id,
+            event,
+            createdAt,
+          },
+        })
+      );
 
       pub.publish(
         channelId,
         JSON.stringify({
           event,
           data: {
-            ...data,
+            // ...data,
+            channelId,
             id,
             event,
             createdAt,

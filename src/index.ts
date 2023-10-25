@@ -5,7 +5,6 @@ import {
   WebsocketData,
 } from "./types";
 import { ServerWebSocket } from "bun";
-import { PrismaClient } from "@prisma/client";
 import handleNewChatMessage from "./handlers/handleNewChatMessage";
 import { handleFetch } from "./handlers/handleFetch";
 
@@ -21,7 +20,7 @@ if (!REDIS_REST_URL) {
   process.exit(1);
 }
 if (!NEXTAUTH_SECRET) {
-  console.error("API_KEY is required");
+  console.error("NEXTAUTH_SECRET is required");
   process.exit(1);
 }
 
@@ -30,9 +29,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const prisma = new PrismaClient();
-
-prisma.$connect();
+// prisma.$connect();
 
 // initialize redis publisher and subscriber
 const pub = new Redis(REDIS_REST_URL);
@@ -112,7 +109,7 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
   const parsed = JSON.parse(message);
   switch (parsed.event) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
-      await handleNewChatMessage(parsed, ws, prisma, pub);
+      await handleNewChatMessage(parsed, ws, pub);
       break;
     default:
       ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
@@ -121,10 +118,9 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
 }
 
 async function onClose(ws: ServerWebSocket<WebsocketData>) {
-  // Unsubscribe from all of the user's channels when their websocket closes
-
   const { channels, orgId, userId } = ws.data;
 
+  // Unsubscribe from all of the user's channels when their websocket closes
   channels.forEach((channel) => {
     ws.unsubscribe(channel);
     const currentCount = userCountPerChannel.get(channel) || 0;
