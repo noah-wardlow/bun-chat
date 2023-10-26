@@ -1,6 +1,7 @@
 import { Server } from "bun";
 import { isValidDecodedToken, parseCookies } from "../utils";
 import { decode } from "next-auth/jwt";
+import sql from "../db";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 
 export async function handleFetch(req: Request, server: Server) {
@@ -30,22 +31,52 @@ export async function handleFetch(req: Request, server: Server) {
       return new Response("Invalid token", { status: 401 });
     }
 
-    const { id } = decoded;
-    // Upgrade to websocket
-    const success = server.upgrade(req, {
-      data: { channels: [1], userId: id, orgId: 1 },
-      // Can add headers here
-      //   headers: {
-      //     "Set-Cookie": `SessionId=${Date.now()}`,
-      //   },
-    });
+    let { id, orgId } = decoded;
 
-    if (!success) {
-      throw new Response("WebSocket upgrade error", { status: 400 });
+    // get users channels
+    try {
+      const rows = await sql`
+  SELECT "Channel"."id"
+  FROM "Channel"
+  JOIN "ChannelUser" ON "Channel"."id" = "ChannelUser"."channelId"
+  WHERE "ChannelUser"."userId" = ${id}
+`;
+
+      const channelIds = rows.map((row) => row.id);
+
+      // If a user isn't part of an org, set orgId to the first admin's id -- only teachers can create channels if not in an org
+      if (!orgId) {
+        const adminRows = await sql`
+        SELECT "ChannelUser"."userId"
+        FROM "Channel"
+        JOIN "ChannelUser" ON "Channel"."id" = "ChannelUser"."channelId"
+        WHERE "ChannelUser"."role" = 'ADMIN'
+        ORDER BY "Channel"."id"
+        LIMIT 1
+      `;
+
+        orgId = adminRows[0]?.userId;
+      }
+
+      // Upgrade to websocket
+      const success = server.upgrade(req, {
+        data: { channels: channelIds, userId: id, orgId },
+        // Can add headers here
+        //   headers: {
+        //     "Set-Cookie": `SessionId=${Date.now()}`,
+        //   },
+      });
+
+      if (!success) {
+        throw new Response("WebSocket upgrade error", { status: 400 });
+      }
+      // Return undefined if handshake is successful
+      return undefined;
+    } catch (err) {
+      return new Response("Unauthorized", { status: 401 });
     }
-    // Return undefined if handshake is successful
-    return undefined;
   } catch (err) {
-    return new Response("Unauthorized", { status: 401 });
+    console.error(err);
+    return new Response("Error fetching channels", { status: 500 });
   }
 }

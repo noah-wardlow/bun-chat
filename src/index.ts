@@ -86,6 +86,10 @@ async function onOpen(ws: ServerWebSocket<WebsocketData>) {
   sub.subscribe(onlineUsersKey);
   ws.subscribe(onlineUsersKey);
 
+  const userNotifKey = `${userId}:notifications`;
+  sub.subscribe(userNotifKey);
+  ws.subscribe(userNotifKey);
+
   // Increment user count for org and publish to online users channel
 
   userCountPerOrg.set(orgId, (userCountPerOrg.get(orgId) || 0) + 1);
@@ -122,7 +126,6 @@ async function onClose(ws: ServerWebSocket<WebsocketData>) {
 
   // Unsubscribe from all of the user's channels when their websocket closes
   channels.forEach((channel) => {
-    ws.unsubscribe(channel);
     const currentCount = userCountPerChannel.get(channel) || 0;
     const newCount = Math.max(0, currentCount - 1);
     userCountPerChannel.set(channel, newCount);
@@ -150,4 +153,5 @@ async function onClose(ws: ServerWebSocket<WebsocketData>) {
     // Unsubscribe from channel if no users are subscribed
     sub.unsubscribe(onlineUsersKey);
   }
+  sub.unsubscribe(`${userId}:notifications`);
 }

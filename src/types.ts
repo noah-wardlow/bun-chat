@@ -1,6 +1,5 @@
 export interface DecodedToken {
-  channels: string[];
-  userId: string;
+  id: string;
   orgId: string;
 }
 
