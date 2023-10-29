@@ -16,9 +16,9 @@ export default async function handleNewChatMessage(
 ) {
   if (isNewChatMessageData(parsed)) {
     try {
-      const { data, event } = parsed;
+      const { payload, event } = parsed;
 
-      const { userId, content, channelId } = data;
+      const { userId, content, channelId } = payload;
 
       // save message to db
       const [{ createdAt, id }] = await sql`
@@ -30,10 +30,9 @@ export default async function handleNewChatMessage(
       console.log(
         JSON.stringify({
           event,
-          data: {
-            ...data,
+          payload: {
+            ...payload,
             id,
-            event,
             createdAt,
           },
         })
@@ -43,11 +42,9 @@ export default async function handleNewChatMessage(
         channelId,
         JSON.stringify({
           event,
-          data: {
-            // ...data,
-            channelId,
+          payload: {
+            ...payload,
             id,
-            event,
             createdAt,
           },
         })

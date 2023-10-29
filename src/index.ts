@@ -73,22 +73,15 @@ async function onOpen(ws: ServerWebSocket<WebsocketData>) {
   const { channels, orgId, userId } = ws.data;
 
   // Subscribe to all of the user's channels
-  channels.forEach((channel) => {
-    ws.subscribe(channel);
-    sub.subscribe(channel);
-    userCountPerChannel.set(
-      channel,
-      (userCountPerChannel.get(channel) || 0) + 1
-    );
-  });
+  subscribeToChannels(channels, ws);
   // Subscribe to online users channel for a users org
   const onlineUsersKey = `${orgId}:onlineUsers`;
   sub.subscribe(onlineUsersKey);
   ws.subscribe(onlineUsersKey);
 
-  const userNotifKey = `${userId}:notifications`;
-  sub.subscribe(userNotifKey);
-  ws.subscribe(userNotifKey);
+  // const userNotifKey = `${userId}:notifications`;
+  // sub.subscribe(userNotifKey);
+  // ws.subscribe(userNotifKey);
 
   // Increment user count for org and publish to online users channel
 
@@ -115,6 +108,9 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
       await handleNewChatMessage(parsed, ws, pub);
       break;
+    case IncomingMessagetEvents.SUBSCRIBE_TO_CHANNELS:
+      console.log(message);
+      subscribeToChannels(parsed.payload.channelIds, ws);
     default:
       ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
       break;
@@ -125,15 +121,7 @@ async function onClose(ws: ServerWebSocket<WebsocketData>) {
   const { channels, orgId, userId } = ws.data;
 
   // Unsubscribe from all of the user's channels when their websocket closes
-  channels.forEach((channel) => {
-    const currentCount = userCountPerChannel.get(channel) || 0;
-    const newCount = Math.max(0, currentCount - 1);
-    userCountPerChannel.set(channel, newCount);
-    if (newCount === 0) {
-      // Unsubscribe from channel if no users are subscribed
-      sub.unsubscribe(channel);
-    }
-  });
+  unsubscribeFromChannels(channels);
   // Remove user from online users set and publish to online users channel
   const onlineUsersKey = `${orgId}:onlineUsers`;
   const pipeline = pub.pipeline();
@@ -154,4 +142,30 @@ async function onClose(ws: ServerWebSocket<WebsocketData>) {
     sub.unsubscribe(onlineUsersKey);
   }
   sub.unsubscribe(`${userId}:notifications`);
+}
+
+function subscribeToChannels(
+  channelIds: string[],
+  ws: ServerWebSocket<WebsocketData>
+) {
+  for (const channel of channelIds) {
+    ws.subscribe(channel);
+    sub.subscribe(channel);
+    userCountPerChannel.set(
+      channel,
+      (userCountPerChannel.get(channel) || 0) + 1
+    );
+  }
+}
+
+function unsubscribeFromChannels(channelIds: string[]) {
+  for (const channel of channelIds) {
+    const currentCount = userCountPerChannel.get(channel) || 0;
+    const newCount = Math.max(0, currentCount - 1);
+    userCountPerChannel.set(channel, newCount);
+    if (newCount === 0) {
+      // Unsubscribe from channel if no users are subscribed
+      sub.unsubscribe(channel);
+    }
+  }
 }

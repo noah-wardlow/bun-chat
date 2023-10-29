@@ -44,20 +44,6 @@ export async function handleFetch(req: Request, server: Server) {
 
       const channelIds = rows.map((row) => row.id);
 
-      // If a user isn't part of an org, set orgId to the first admin's id -- only teachers can create channels if not in an org
-      if (!orgId) {
-        const adminRows = await sql`
-        SELECT "ChannelUser"."userId"
-        FROM "Channel"
-        JOIN "ChannelUser" ON "Channel"."id" = "ChannelUser"."channelId"
-        WHERE "ChannelUser"."role" = 'ADMIN'
-        ORDER BY "Channel"."id"
-        LIMIT 1
-      `;
-
-        orgId = adminRows[0]?.userId;
-      }
-
       // Upgrade to websocket
       const success = server.upgrade(req, {
         data: { channels: channelIds, userId: id, orgId },
