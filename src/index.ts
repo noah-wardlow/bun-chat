@@ -7,6 +7,7 @@ import {
 import { ServerWebSocket } from "bun";
 import handleNewChatMessage from "./handlers/handleNewChatMessage";
 import { handleFetch } from "./handlers/handleFetch";
+import handleNewReply from "./handlers/handleNewReply";
 
 // Load environment variables
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -108,9 +109,14 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
       await handleNewChatMessage(parsed, ws, pub);
       break;
+    case IncomingMessagetEvents.NEW_REPLY_IN_THREAD:
+      await handleNewReply(parsed, ws, pub);
+      break;
+
     case IncomingMessagetEvents.SUBSCRIBE_TO_CHANNELS:
       console.log(message);
       subscribeToChannels(parsed.payload.channelIds, ws);
+      break;
     default:
       ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
       break;

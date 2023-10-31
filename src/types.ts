@@ -7,6 +7,7 @@ export enum IncomingMessagetEvents {
   NEW_CHAT_MESSAGE = "NEW_CHAT_MESSAGE",
   SUBSCRIBE_TO_CHANNELS = "SUBSCRIBE_TO_CHANNELS",
   OTHER_EVENT = "OTHER_EVENT",
+  NEW_REPLY_IN_THREAD = "NEW_REPLY_IN_THREAD",
   // Add other event types here
 }
 
@@ -26,15 +27,19 @@ export interface NewChatMessageData {
   };
 }
 
-export interface SubscribeToChannelsData {
-  payload: { channelIds: string[] };
+export interface NewReplyInThreadData {
+  event: IncomingMessagetEvents.NEW_REPLY_IN_THREAD;
+  payload: {
+    channelId: string;
+    userId: string;
+    content: string;
+    threadId: string;
+    messageId: string;
+  };
 }
 
-interface OtherEventData {
-  event: IncomingMessagetEvents.OTHER_EVENT; // Replace with actual event name
-  data: {
-    // Define other properties here
-  };
+export interface SubscribeToChannelsData {
+  payload: { channelIds: string[] };
 }
 
 export type IncomingMessageData = NewChatMessageData | SubscribeToChannelsData;

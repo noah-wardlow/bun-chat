@@ -2,6 +2,7 @@ import {
   DecodedToken,
   NewChatMessageData,
   IncomingMessagetEvents,
+  NewReplyInThreadData,
 } from "./types";
 
 export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
@@ -20,7 +21,29 @@ export function isNewChatMessageData(obj: unknown): obj is NewChatMessageData {
   return (
     obj instanceof Object &&
     "event" in obj &&
-    obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE
+    obj.event === IncomingMessagetEvents.NEW_CHAT_MESSAGE &&
+    "payload" in obj &&
+    obj.payload instanceof Object &&
+    "userId" in obj.payload &&
+    "content" in obj.payload &&
+    "channelId" in obj.payload
+  );
+}
+
+export function isNewReplyInThreadData(
+  obj: unknown
+): obj is NewReplyInThreadData {
+  return (
+    obj instanceof Object &&
+    "event" in obj &&
+    obj.event === IncomingMessagetEvents.NEW_REPLY_IN_THREAD &&
+    "payload" in obj &&
+    obj.payload instanceof Object &&
+    "threadId" in obj.payload &&
+    "userId" in obj.payload &&
+    "content" in obj.payload &&
+    "channelId" in obj.payload &&
+    "messageId" in obj.payload
   );
 }
 
