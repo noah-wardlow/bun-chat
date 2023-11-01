@@ -6,7 +6,7 @@ export interface DecodedToken {
 export enum IncomingMessagetEvents {
   NEW_CHAT_MESSAGE = "NEW_CHAT_MESSAGE",
   SUBSCRIBE_TO_CHANNELS = "SUBSCRIBE_TO_CHANNELS",
-  OTHER_EVENT = "OTHER_EVENT",
+  TOGGLE_REACTION = "TOGGLE_REACTION",
   NEW_REPLY_IN_THREAD = "NEW_REPLY_IN_THREAD",
   // Add other event types here
 }
@@ -36,6 +36,28 @@ export interface NewReplyInThreadData {
     threadId: string;
     messageId: string;
   };
+}
+
+export interface Reaction {
+  activeSkinTone: string;
+  emoji: string;
+  unified: string;
+  isCustom: boolean;
+  imageUrl: string;
+  names: string[];
+}
+
+type MessageOrReplyId =
+  | { messageId: string; replyId?: never }
+  | { messageId?: never; replyId: string };
+
+export interface ReactionData {
+  event: IncomingMessagetEvents.TOGGLE_REACTION;
+  payload: {
+    reaction: Reaction;
+    channelId: string;
+    userId: string;
+  } & MessageOrReplyId;
 }
 
 export interface SubscribeToChannelsData {

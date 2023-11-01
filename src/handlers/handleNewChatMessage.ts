@@ -1,45 +1,42 @@
-import { isNewChatMessageData } from "../utils";
 import Redis from "ioredis";
-import { OutgoingMessageEvents, WebsocketData } from "../types";
+import {
+  NewChatMessageData,
+  OutgoingMessageEvents,
+  WebsocketData,
+} from "../types";
 import { ServerWebSocket } from "bun";
 import sql from "../db";
 
 export default async function handleNewChatMessage(
-  parsed: unknown,
+  parsed: NewChatMessageData,
   ws: ServerWebSocket<WebsocketData>,
   pub: Redis
 ) {
-  if (isNewChatMessageData(parsed)) {
-    try {
-      const { payload, event } = parsed;
+  try {
+    const { payload, event } = parsed;
 
-      const { userId, content, channelId } = payload;
+    const { userId, content, channelId } = payload;
 
-      // save message to db
-      const [{ createdAt, id }] = await sql`
+    // save message to db
+    const [{ createdAt, id }] = await sql`
       INSERT INTO "Message" ("channelId", "userId", "content")
       VALUES (${channelId}, ${userId}, ${content})
       RETURNING "id", "createdAt"
     `;
 
-      pub.publish(
-        channelId,
-        JSON.stringify({
-          event,
-          payload: {
-            ...payload,
-            id,
-            createdAt,
-          },
-        })
-      );
-    } catch (err) {
-      console.error(err);
-      ws.send(
-        JSON.stringify({ event: OutgoingMessageEvents.MESSAGE_SEND_FAIL })
-      );
-    }
-  } else {
-    ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
+    pub.publish(
+      channelId,
+      JSON.stringify({
+        event,
+        payload: {
+          ...payload,
+          id,
+          createdAt,
+        },
+      })
+    );
+  } catch (err) {
+    console.error(err);
+    ws.send(JSON.stringify({ event: OutgoingMessageEvents.MESSAGE_SEND_FAIL }));
   }
 }

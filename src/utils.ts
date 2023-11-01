@@ -3,6 +3,7 @@ import {
   NewChatMessageData,
   IncomingMessagetEvents,
   NewReplyInThreadData,
+  ReactionData,
 } from "./types";
 
 export function isValidDecodedToken(obj: unknown): obj is DecodedToken {
@@ -44,6 +45,28 @@ export function isNewReplyInThreadData(
     "content" in obj.payload &&
     "channelId" in obj.payload &&
     "messageId" in obj.payload
+  );
+}
+
+export function isReactionData(obj: unknown): obj is ReactionData {
+  return (
+    obj instanceof Object &&
+    "event" in obj &&
+    obj.event === IncomingMessagetEvents.TOGGLE_REACTION &&
+    "payload" in obj &&
+    obj.payload instanceof Object &&
+    "channelId" in obj.payload &&
+    "userId" in obj.payload &&
+    // "messageId" in obj.payload &&
+    "reaction" in obj.payload &&
+    obj.payload.reaction instanceof Object &&
+    "activeSkinTone" in obj.payload.reaction &&
+    "emoji" in obj.payload.reaction &&
+    "unified" in obj.payload.reaction &&
+    "isCustom" in obj.payload.reaction &&
+    "imageUrl" in obj.payload.reaction &&
+    "names" in obj.payload.reaction &&
+    Array.isArray(obj.payload.reaction.names)
   );
 }
 
