@@ -52,7 +52,7 @@ export function isReactionData(obj: unknown): obj is ReactionData {
   return (
     obj instanceof Object &&
     "event" in obj &&
-    obj.event === IncomingMessagetEvents.TOGGLE_REACTION &&
+    obj.event === IncomingMessagetEvents.ADD_REACTION &&
     "payload" in obj &&
     obj.payload instanceof Object &&
     "channelId" in obj.payload &&

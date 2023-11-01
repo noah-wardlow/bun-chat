@@ -8,7 +8,10 @@ import { ServerWebSocket } from "bun";
 import handleNewChatMessage from "./handlers/handleNewChatMessage";
 import { handleFetch } from "./handlers/handleFetch";
 import handleNewReply from "./handlers/handleNewReply";
-import handleReaction from "./handlers/handleReaction";
+import {
+  handleAddReaction,
+  handleRemoveReaction,
+} from "./handlers/handleReaction";
 
 // Load environment variables
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -118,8 +121,12 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
       subscribeToChannels(parsed.payload.channelIds, ws);
       break;
 
-    case IncomingMessagetEvents.TOGGLE_REACTION:
-      await handleReaction(parsed, ws, pub);
+    case IncomingMessagetEvents.ADD_REACTION:
+      await handleAddReaction(parsed, ws, pub);
+      break;
+
+    case IncomingMessagetEvents.REMOVE_REACTION:
+      await handleRemoveReaction(parsed, ws, pub);
       break;
     default:
       ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));

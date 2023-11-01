@@ -15,12 +15,12 @@ export default async function handleNewChatMessage(
   try {
     const { payload, event } = parsed;
 
-    const { userId, content, channelId } = payload;
+    const { user, content, channelId } = payload;
 
     // save message to db
     const [{ createdAt, id }] = await sql`
       INSERT INTO "Message" ("channelId", "userId", "content")
-      VALUES (${channelId}, ${userId}, ${content})
+      VALUES (${channelId}, ${user.id}, ${content})
       RETURNING "id", "createdAt"
     `;
 

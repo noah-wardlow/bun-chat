@@ -1,24 +1,28 @@
 import { ServerWebSocket } from "bun";
-import { OutgoingMessageEvents, ReactionData, WebsocketData } from "../types";
+import {
+  OutgoingMessageEvents,
+  ReactionData,
+  RemoveReactionData,
+  WebsocketData,
+} from "../types";
 import Redis from "ioredis";
 import sql from "../db";
 
-export default async function handleNewReply(
+export async function handleAddReaction(
   parsed: ReactionData,
   ws: ServerWebSocket<WebsocketData>,
   pub: Redis
 ) {
   try {
     const { payload, event } = parsed;
-    const { userId, messageId, channelId, reaction, replyId } = payload;
-    const { unified, emoji, activeSkinTone, isCustom, imageUrl, names } =
-      reaction;
+    const { user, messageId, channelId, reaction, replyId } = payload;
+    const { unified, native, skin, name, shortcodes, emojiId } = reaction;
     if (replyId) {
       const [{ id, createdAt }] = await sql`
-  INSERT INTO "Reaction" ("emoji", "unified", "isCustom", "imageUrl", "names", "activeSkinTone", "userId", "replyId" )
-  VALUES (${emoji}, ${unified}, ${isCustom}, ${imageUrl}, ${names}, ${activeSkinTone}, ${userId}, ${replyId})
-  RETURNING "id", "createdAt"
-`;
+      INSERT INTO "Reaction" ("emojiId", "native", "unified", "name", "skin", "shortcodes", "userId", "replyId" )
+      VALUES (${emojiId}, ${native}, ${unified}, ${name}, ${skin}, ${shortcodes}, ${user.id}, ${replyId})
+      RETURNING "id", "createdAt"
+    `;
 
       pub.publish(
         channelId,
@@ -28,7 +32,7 @@ export default async function handleNewReply(
             ...payload.reaction,
             replyId,
             messageId,
-            userId,
+            user,
             id,
             createdAt,
             channelId,
@@ -37,10 +41,10 @@ export default async function handleNewReply(
       );
     } else if (messageId) {
       const [{ id, createdAt }] = await sql`
-  INSERT INTO "Reaction" ("emoji", "unified", "isCustom", "imageUrl", "names", "activeSkinTone", "userId", "messageId" )
-  VALUES (${emoji}, ${unified}, ${isCustom}, ${imageUrl}, ${names}, ${activeSkinTone}, ${userId}, ${messageId})
-  RETURNING "id", "createdAt"
-`;
+      INSERT INTO "Reaction" ("emojiId", "native", "unified", "name", "skin", "shortcodes", "userId", "messageId" )
+      VALUES (${emojiId}, ${native}, ${unified}, ${name}, ${skin}, ${shortcodes}, ${user.id}, ${messageId})
+      RETURNING "id", "createdAt"
+    `;
 
       pub.publish(
         channelId,
@@ -49,7 +53,7 @@ export default async function handleNewReply(
           payload: {
             ...payload.reaction,
             messageId,
-            userId,
+            user,
             id,
             createdAt,
             channelId,
@@ -57,6 +61,32 @@ export default async function handleNewReply(
         })
       );
     }
+  } catch (err) {
+    console.error(err);
+    ws.send(JSON.stringify({ event: OutgoingMessageEvents.MESSAGE_SEND_FAIL }));
+  }
+}
+
+export async function handleRemoveReaction(
+  parsed: RemoveReactionData,
+  ws: ServerWebSocket<WebsocketData>,
+  pub: Redis
+) {
+  try {
+    const { payload, event } = parsed;
+    const { reactionId, channelId } = payload;
+    await sql`
+      DELETE FROM "Reaction"
+      WHERE "id" = ${reactionId}
+    `;
+
+    pub.publish(
+      channelId,
+      JSON.stringify({
+        event,
+        payload,
+      })
+    );
   } catch (err) {
     console.error(err);
     ws.send(JSON.stringify({ event: OutgoingMessageEvents.MESSAGE_SEND_FAIL }));

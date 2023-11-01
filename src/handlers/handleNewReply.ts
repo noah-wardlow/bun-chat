@@ -14,11 +14,11 @@ export default async function handleNewReply(
 ) {
   try {
     const { payload, event } = parsed;
-    const { threadId, userId, content, channelId } = payload;
+    const { threadId, user, content, channelId } = payload;
 
     const [{ createdAt, id }] = await sql`
     INSERT INTO "Reply" ("threadId", "userId", "content")
-    VALUES (${threadId}, ${userId}, ${content})
+    VALUES (${threadId}, ${user.id}, ${content})
     RETURNING "id", "createdAt"
   `;
 
