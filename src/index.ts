@@ -37,8 +37,28 @@ if (!DATABASE_URL) {
 // prisma.$connect();
 
 // initialize redis publisher and subscriber
-const pub = new Redis(REDIS_REST_URL);
-const sub = new Redis(REDIS_REST_URL);
+const pub = new Redis(REDIS_REST_URL, {
+  keepAlive: 60000,
+  maxRetriesPerRequest: 5,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000);
+    console.log(`Redis pub retrying request in ${delay}ms`);
+    return delay;
+  },
+});
+const sub = new Redis(REDIS_REST_URL, {
+  keepAlive: 60000,
+  maxRetriesPerRequest: 5,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000);
+    console.log(`Redis sub retrying request in ${delay}ms`);
+    return delay;
+  },
+});
+
+setInterval(() => {
+  pub.ping();
+}, 1000 * 60 * 5);
 
 // Track number of users per instance to know when to unsubscribe redis from channels
 const userCountPerChannel = new Map<string, number>();
@@ -70,7 +90,7 @@ sub.on("message", (channel, message) => {
   server.publish(channel, message);
 });
 
-console.log(`Listening on ${server.hostname}:${server.port}`);
+console.info(`Listening on ${server.hostname}:${server.port}`);
 
 // Websocket open, message, close handlers
 
@@ -108,11 +128,16 @@ async function onOpen(ws: ServerWebSocket<WebsocketData>) {
 
 // Incoming websocket message handler
 async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
+  if (message === "ping") {
+    ws.send("pong");
+    return;
+  }
   const parsed = JSON.parse(message);
   switch (parsed.event) {
     case IncomingMessagetEvents.NEW_CHAT_MESSAGE:
       await handleNewChatMessage(parsed, ws, pub);
       break;
+
     case IncomingMessagetEvents.NEW_REPLY_IN_THREAD:
       await handleNewReply(parsed, ws, pub);
       break;
@@ -128,6 +153,7 @@ async function onMsg(message: string, ws: ServerWebSocket<WebsocketData>) {
     case IncomingMessagetEvents.REMOVE_REACTION:
       await handleRemoveReaction(parsed, ws, pub);
       break;
+
     default:
       ws.send(JSON.stringify({ event: OutgoingMessageEvents.INVALID_MESSAGE }));
       break;
